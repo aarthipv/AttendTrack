@@ -3,17 +3,26 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Set mongoose options
-mongoose.set('strictQuery', false);
+// Use the MongoDB URI from environment variables
+// Make sure the URI starts with mongodb:// or mongodb+srv://
+let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/attendance_tracker';
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance-tracker');
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    process.exit(1);
-  }
-};
+// Check if the URI doesn't start with mongodb:// or mongodb+srv://
+if (MONGODB_URI && 
+    !MONGODB_URI.startsWith('mongodb://') && 
+    !MONGODB_URI.startsWith('mongodb+srv://')) {
+  // Use a default URI for development
+  MONGODB_URI = 'mongodb://127.0.0.1:27017/attendance_tracker';
+  console.warn('Invalid MongoDB URI format. Using local MongoDB instance instead.');
+}
 
-export default connectDB;
+// Connect to MongoDB
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+  });
+
+export default mongoose;

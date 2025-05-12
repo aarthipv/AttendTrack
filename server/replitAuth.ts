@@ -5,11 +5,19 @@ import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
-import connectPg from "connect-pg-simple";
-import { storage } from "./storage";
+import MongoStore from "connect-mongo";
+import { AuthService } from "./services";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
+}
+
+// We will use the Database URL provided by Replit
+if (!process.env.DATABASE_URL) {
+  throw new Error("Environment variable DATABASE_URL not provided");
 }
 
 const getOidcConfig = memoize(
@@ -24,16 +32,31 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
+  
+  // Create MongoDB connection using the environment variable
+  // Ensure the MongoDB URI is valid
+  let mongoUrl = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/attendance_tracker";
+  
+  // Check if the URI doesn't start with mongodb:// or mongodb+srv://
+  if (mongoUrl && 
+      !mongoUrl.startsWith('mongodb://') && 
+      !mongoUrl.startsWith('mongodb+srv://')) {
+    // Use a default URI for development
+    mongoUrl = 'mongodb://127.0.0.1:27017/attendance_tracker';
+    console.warn('Invalid MongoDB URI format in session store. Using local MongoDB instance instead.');
+  }
+  
+  const mongoStore = MongoStore.create({
+    mongoUrl,
+    ttl: sessionTtl / 1000, // MongoStore takes seconds, not milliseconds
+    crypto: {
+      secret: process.env.SESSION_SECRET || "attendance-tracker-secret",
+    },
   });
+  
   return session({
     secret: process.env.SESSION_SECRET!,
-    store: sessionStore,
+    store: mongoStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -41,28 +64,6 @@ export function getSession() {
       secure: true,
       maxAge: sessionTtl,
     },
-  });
-}
-
-function updateUserSession(
-  user: any,
-  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
-) {
-  user.claims = tokens.claims();
-  user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
-}
-
-async function upsertUser(
-  claims: any,
-) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
   });
 }
 
@@ -78,9 +79,12 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    const user: any = {};
+    user.claims = tokens.claims();
+    user.access_token = tokens.access_token;
+    user.refresh_token = tokens.refresh_token;
+    user.expires_at = tokens.claims()?.exp;
+    await AuthService.upsertUser(tokens.claims());
     verified(null, user);
   };
 
@@ -147,7 +151,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
     const config = await getOidcConfig();
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
+    user.claims = tokenResponse.claims();
+    user.access_token = tokenResponse.access_token;
+    user.refresh_token = tokenResponse.refresh_token;
+    user.expires_at = tokenResponse.claims()?.exp;
     return next();
   } catch (error) {
     return res.redirect("/api/login");
