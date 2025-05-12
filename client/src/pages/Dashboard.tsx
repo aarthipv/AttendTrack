@@ -160,158 +160,68 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="py-10">
-      <header>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900">Your Attendance Dashboard</h1>
-        </div>
-      </header>
-      <main>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Summary Cards */}
-          {!isCoursesLoading && courses.length > 0 && (
-            <SummaryCards courses={courses} />
-          )}
-
-          {/* Add Course Button */}
-          <div className="mt-8 flex justify-end">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              <Plus className="-ml-1 mr-2 h-4 w-4" />
-              Add Course
-            </Button>
-          </div>
-
-          {/* Course List Heading */}
-          <div className="mt-8 sm:flex sm:items-center">
-            <div className="sm:flex-auto">
-              <h2 className="text-xl font-semibold text-gray-900">Your Courses</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                A list of all your courses and their attendance statistics.
-              </p>
-            </div>
-          </div>
-
-          {/* Loading State */}
-          {isCoursesLoading && (
-            <div className="mt-6 flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {coursesError && (
-            <div className="mt-6 bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Attendance Overview Card */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error loading courses</h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{coursesError instanceof Error ? coursesError.message : "Unknown error"}</p>
-                  </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Overall Attendance</dt>
+                    <dd className="text-lg font-medium text-gray-900">85%</dd>
+                  </dl>
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Empty State */}
-          {!isCoursesLoading && !coursesError && courses.length === 0 && (
-            <div className="mt-6 text-center py-12 bg-gray-50 rounded-lg">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No courses</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by adding a new course.
-              </p>
-              <div className="mt-6">
-                <Button 
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90"
-                >
-                  <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                  Add Course
-                </Button>
+          {/* Classes Card */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Active Classes</dt>
+                    <dd className="text-lg font-medium text-gray-900">4</dd>
+                  </dl>
+                </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Courses Table (Desktop) and Cards (Mobile) */}
-          {!isCoursesLoading && !coursesError && courses.length > 0 && (
-            <>
-              <AttendanceTable 
-                courses={courses} 
-                onEdit={handleEditCourse} 
-                onDelete={handleDeleteConfirmation} 
-              />
-              <AttendanceCards 
-                courses={courses} 
-                onEdit={handleEditCourse} 
-                onDelete={handleDeleteConfirmation} 
-              />
-            </>
-          )}
-
-          {/* Add Course Modal */}
-          <AddCourseModal 
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            onAddCourse={handleAddCourse}
-            isSubmitting={isAddingCourse}
-          />
-
-          {/* Edit Course Modal */}
-          <EditCourseModal 
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedCourse(null);
-            }}
-            course={selectedCourse}
-            onUpdateCourse={handleUpdateCourse}
-            isSubmitting={isUpdatingCourse}
-          />
-
-          {/* Delete Confirmation Dialog */}
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the course and all its data.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeletingCourse}>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={handleDeleteCourse}
-                  disabled={isDeletingCourse}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeletingCourse ? "Deleting..." : "Delete"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {/* Next Class Card */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Next Class</dt>
+                    <dd className="text-lg font-medium text-gray-900">Computer Science 101</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
