@@ -5,7 +5,8 @@ import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
-import MongoStore from "connect-mongo";
+import connectPg from "connect-pg-simple";
+import pg from 'pg';
 import { AuthService } from "./services";
 import dotenv from 'dotenv';
 
@@ -15,7 +16,7 @@ if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
 
-// We will use the Database URL provided by Replit
+// We will use the PostgreSQL Database URL provided by Replit
 if (!process.env.DATABASE_URL) {
   throw new Error("Environment variable DATABASE_URL not provided");
 }
@@ -33,30 +34,20 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   
-  // Create MongoDB connection using the environment variable
-  // Ensure the MongoDB URI is valid
-  let mongoUrl = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/attendance_tracker";
+  // Create PostgreSQL session store
+  const pgStore = connectPg(session);
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   
-  // Check if the URI doesn't start with mongodb:// or mongodb+srv://
-  if (mongoUrl && 
-      !mongoUrl.startsWith('mongodb://') && 
-      !mongoUrl.startsWith('mongodb+srv://')) {
-    // Use a default URI for development
-    mongoUrl = 'mongodb://127.0.0.1:27017/attendance_tracker';
-    console.warn('Invalid MongoDB URI format in session store. Using local MongoDB instance instead.');
-  }
-  
-  const mongoStore = MongoStore.create({
-    mongoUrl,
-    ttl: sessionTtl / 1000, // MongoStore takes seconds, not milliseconds
-    crypto: {
-      secret: process.env.SESSION_SECRET || "attendance-tracker-secret",
-    },
+  const sessionStore = new pgStore({
+    pool,
+    createTableIfMissing: true,
+    tableName: 'sessions',
+    ttl: sessionTtl / 1000,
   });
   
   return session({
-    secret: process.env.SESSION_SECRET!,
-    store: mongoStore,
+    secret: process.env.SESSION_SECRET || "attendance-tracker-secret",
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {

@@ -1,41 +1,51 @@
-import { Course } from '../models';
-import mongoose from 'mongoose';
+import { storage } from '../storage';
 import { CreateCourse, UpdateCourse } from '../../shared/validators';
 
 /**
  * Get all courses for a specific user
  */
 export async function getCoursesByUserId(userId: string) {
-  return await Course.find({ userId }).sort({ createdAt: -1 }).lean();
+  return await storage.getCoursesByUserId(userId);
 }
 
 /**
  * Get a specific course by ID
  */
 export async function getCourseById(id: string) {
-  return await Course.findById(id).lean();
+  // Convert string ID to number for PostgreSQL storage
+  const numericId = parseInt(id, 10);
+  if (isNaN(numericId)) {
+    throw new Error('Invalid course ID');
+  }
+  return await storage.getCourseById(numericId);
 }
 
 /**
  * Create a new course
  */
 export async function createCourse(userId: string, courseData: CreateCourse) {
-  const newCourse = new Course({
+  // Prepare course data for storage layer
+  const courseToCreate = {
     userId,
     name: courseData.name,
     attendedClasses: courseData.attendedClasses,
     missedClasses: courseData.missedClasses,
     totalClasses: courseData.totalClasses
-  });
+  };
   
-  await newCourse.save();
-  return newCourse.toObject();
+  return await storage.createCourse(courseToCreate);
 }
 
 /**
  * Update an existing course
  */
 export async function updateCourse(id: string, updateData: UpdateCourse) {
+  // Convert string ID to number for PostgreSQL storage
+  const numericId = parseInt(id, 10);
+  if (isNaN(numericId)) {
+    throw new Error('Invalid course ID');
+  }
+  
   // First, check if the update would violate our rule
   if (updateData.attendedClasses !== undefined && 
       updateData.missedClasses !== undefined && 
@@ -47,7 +57,7 @@ export async function updateCourse(id: string, updateData: UpdateCourse) {
              updateData.missedClasses !== undefined || 
              updateData.totalClasses !== undefined) {
     // If only some fields are updated, we need to get the current data
-    const currentCourse = await Course.findById(id);
+    const currentCourse = await storage.getCourseById(numericId);
     if (!currentCourse) {
       throw new Error('Course not found');
     }
@@ -61,26 +71,18 @@ export async function updateCourse(id: string, updateData: UpdateCourse) {
     }
   }
   
-  const updatedCourse = await Course.findByIdAndUpdate(
-    id,
-    updateData,
-    { new: true, runValidators: true }
-  );
-  
-  if (!updatedCourse) {
-    throw new Error('Course not found');
-  }
-  
-  return updatedCourse.toObject();
+  return await storage.updateCourse(numericId, updateData);
 }
 
 /**
  * Delete a course
  */
 export async function deleteCourse(id: string) {
-  const result = await Course.findByIdAndDelete(id);
-  
-  if (!result) {
-    throw new Error('Course not found');
+  // Convert string ID to number for PostgreSQL storage
+  const numericId = parseInt(id, 10);
+  if (isNaN(numericId)) {
+    throw new Error('Invalid course ID');
   }
+  
+  await storage.deleteCourse(numericId);
 }

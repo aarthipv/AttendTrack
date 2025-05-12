@@ -1,4 +1,4 @@
-import { User } from '../models';
+import { storage } from '../storage';
 
 /**
  * Updates the user's session with tokens and claims
@@ -18,27 +18,19 @@ export function updateUserSession(
  */
 export async function upsertUser(claims: any): Promise<void> {
   const userData = {
-    _id: claims["sub"],
+    id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
   };
 
-  await User.findByIdAndUpdate(
-    userData._id,
-    userData,
-    { 
-      upsert: true, 
-      new: true,
-      runValidators: true 
-    }
-  );
+  await storage.upsertUser(userData);
 }
 
 /**
  * Retrieves a user by ID
  */
 export async function getUser(id: string) {
-  return await User.findById(id).lean();
+  return await storage.getUser(id);
 }
